@@ -1,0 +1,45 @@
+# Entorno virtual Python
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# Logs generados por Sésamo
+logs/*.log
+
+# Reportes generados (output del scanner)
+reportes_output/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Variables de entorno
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Engram y Agentes
+.engram/
+.agents/
+.gemini/
+
+# Pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+.cache/

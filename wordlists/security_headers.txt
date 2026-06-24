@@ -1,0 +1,17 @@
+# ================================================================
+# Sésamo Auditor — Headers de Seguridad Esperados
+# ================================================================
+# Cada línea define un header de seguridad que debería estar
+# presente en las respuestas HTTP de una aplicación segura.
+#
+# Formato: header_name:::severidad:::descripcion:::remediacion
+# ================================================================
+
+X-Frame-Options:::MEDIA:::Protege contra ataques de clickjacking al evitar que la página sea embebida en iframes:::Añadir header: X-Frame-Options: DENY o SAMEORIGIN
+Content-Security-Policy:::ALTA:::Define las fuentes permitidas de contenido (scripts, estilos, imágenes) para prevenir XSS y data injection:::Implementar una política CSP restrictiva que limite los orígenes de scripts y estilos
+Strict-Transport-Security:::ALTA:::Fuerza la conexión HTTPS y previene ataques de downgrade y cookie hijacking:::Añadir header: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options:::BAJA:::Previene MIME type sniffing que puede llevar a ataques XSS:::Añadir header: X-Content-Type-Options: nosniff
+Referrer-Policy:::BAJA:::Controla cuánta información del referrer se envía con las peticiones:::Añadir header: Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy:::MEDIA:::Controla qué APIs del navegador puede usar la página (cámara, micrófono, geolocalización):::Añadir header: Permissions-Policy: camera=(), microphone=(), geolocation=()
+X-XSS-Protection:::INFO:::Header legacy de protección XSS (reemplazado por CSP, pero aún relevante para navegadores antiguos):::Añadir header: X-XSS-Protection: 1; mode=block
+Cache-Control:::MEDIA:::Controla el caching de respuestas sensibles para evitar exposición de datos en cachés compartidas:::Para páginas con datos sensibles usar: Cache-Control: no-store, no-cache, must-revalidate

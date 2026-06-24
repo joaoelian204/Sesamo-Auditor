@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title_suffix %} — Hallazgo #{{ idx + 1 }}{% endblock %}
+
+{% block content %}
+<a href="/hallazgos" class="back-link">← Volver a Hallazgos</a>
+
+<div class="detail-header">
+    <span class="badge badge-{{ hallazgo.severidad.etiqueta|lower }} badge-large">{{ hallazgo.severidad.icono }} {{ hallazgo.severidad.etiqueta }}</span>
+    <h1 class="page-title">{{ hallazgo.plugin_nombre }}</h1>
+    <p class="page-subtitle">Hallazgo #{{ idx + 1 }}</p>
+</div>
+
+<div class="detail-grid">
+    <!-- Info Principal -->
+    <div class="glass-card detail-info">
+        <h2 class="card-title">Información General</h2>
+        <dl class="detail-list">
+            <dt>URL Afectada</dt>
+            <dd><code class="url-display">{{ hallazgo.url_afectada }}</code></dd>
+
+            {% if hallazgo.parametro %}
+            <dt>Parámetro</dt>
+            <dd><code>{{ hallazgo.parametro }}</code></dd>
+            {% endif %}
+
+            <dt>Método HTTP</dt>
+            <dd><code>{{ hallazgo.metodo_http }}</code></dd>
+
+            <dt>Categoría OWASP</dt>
+            <dd>{{ hallazgo.categoria_owasp }}</dd>
+
+            {% if hallazgo.cwe_id %}
+            <dt>CWE</dt>
+            <dd><a href="https://cwe.mitre.org/data/definitions/{{ hallazgo.cwe_id|replace('CWE-', '') }}.html" target="_blank" class="cwe-link">{{ hallazgo.cwe_id }} ↗</a></dd>
+            {% endif %}
+
+            <dt>Confianza</dt>
+            <dd>{{ hallazgo.confianza.etiqueta }}</dd>
+
+            <dt>Timestamp</dt>
+            <dd>{{ hallazgo.timestamp }}</dd>
+        </dl>
+    </div>
+
+    <!-- Payload -->
+    {% if hallazgo.payload_usado %}
+    <div class="glass-card detail-payload">
+        <h2 class="card-title">Payload Utilizado</h2>
+        <pre class="code-block"><code>{{ hallazgo.payload_usado }}</code></pre>
+    </div>
+    {% endif %}
+
+    <!-- Evidencia -->
+    {% if hallazgo.evidencia %}
+    <div class="glass-card detail-evidence">
+        <h2 class="card-title">Evidencia</h2>
+        <div class="evidence-block">
+            <p>{{ hallazgo.evidencia }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Remediación -->
+    {% if hallazgo.remediacion %}
+    <div class="glass-card detail-remediation">
+        <h2 class="card-title">💡 Remediación</h2>
+        <div class="remediation-block">
+            <p>{{ hallazgo.remediacion }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

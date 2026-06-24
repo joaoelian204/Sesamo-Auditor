@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title_suffix %} — Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Dashboard de Seguridad</h1>
+<p class="page-subtitle">Target: <code>{{ resultado.target_url }}</code> · Duración: {{ resumen.duracion }}</p>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card kpi-score">
+        <div class="kpi-value {% if resumen.score_riesgo >= 70 %}text-critica{% elif resumen.score_riesgo >= 40 %}text-alta{% elif resumen.score_riesgo >= 20 %}text-media{% else %}text-safe{% endif %}">
+            {{ resumen.score_riesgo }}
+        </div>
+        <div class="kpi-label">Score de Riesgo /100</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">{{ resumen.total_hallazgos }}</div>
+        <div class="kpi-label">Hallazgos Totales</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">{{ resumen.urls_escaneadas }}</div>
+        <div class="kpi-label">URLs Escaneadas</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-value">{{ resumen.plugins_ejecutados }}</div>
+        <div class="kpi-label">Plugins Ejecutados</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <h2 class="card-title">Distribución por Severidad</h2>
+        <canvas id="chart-severidad" width="400" height="300"></canvas>
+    </div>
+    <div class="chart-card">
+        <h2 class="card-title">Hallazgos por Categoría OWASP</h2>
+        <canvas id="chart-owasp" width="400" height="300"></canvas>
+    </div>
+</div>
+
+<!-- Severidad Breakdown -->
+<div class="severidad-breakdown glass-card">
+    <h2 class="card-title">Resumen por Severidad</h2>
+    <div class="severity-bars">
+        {% for sev_name, sev_count in resumen.por_severidad.items() %}
+        <div class="severity-row" style="--row-width: {{ '%.2f' | format((sev_count / (resumen.total_hallazgos or 1)) * 100) }}%;">
+            <span class="severity-label">{{ sev_name }}</span>
+            <div class="severity-bar-container">
+                <div class="severity-bar severity-bar-{{ sev_name|lower }}"
+                     style="width: var(--row-width)">
+                </div>
+            </div>
+            <span class="severity-count">{{ sev_count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Recent Findings -->
+{% if resultado.hallazgos %}
+<div class="glass-card">
+    <h2 class="card-title">Últimos Hallazgos</h2>
+    <div class="findings-list">
+        {% for h in resultado.hallazgos[:5] %}
+        <a href="/hallazgo/{{ h.global_idx }}" class="finding-item">
+            <span class="badge badge-{{ h.severidad.etiqueta|lower }}">{{ h.severidad.icono }} {{ h.severidad.etiqueta }}</span>
+            <div class="finding-info">
+                <strong>{{ h.plugin_nombre }}</strong>
+                <span class="finding-url">{{ h.url_afectada }}</span>
+            </div>
+            <span class="finding-cwe">{{ h.cwe_id }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% if resultado.hallazgos|length > 5 %}
+    <a href="/hallazgos" class="view-all-link">Ver todos los hallazgos →</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script id="stats-data" type="application/json">
+    {{ resumen.por_severidad | tojson }}
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const statsData = JSON.parse(document.getElementById('stats-data').textContent);
+        renderSeverityChart('chart-severidad', statsData);
+        fetch('/api/estadisticas')
+            .then(r => r.json())
+            .then(data => renderOwaspChart('chart-owasp', data.por_categoria));
+    });
+</script>
+{% endblock %}

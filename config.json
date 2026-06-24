@@ -1,0 +1,52 @@
+{
+    "target": {
+        "url": "http://localhost:3000",
+        "exclusiones": [
+            "/logout",
+            "/socket.io"
+        ]
+    },
+    "crawler": {
+        "max_depth": 10,
+        "max_urls": 500,
+        "respetar_scope": true,
+        "max_workers": 10,
+        "headless": {
+            "habilitar": false,
+            "max_urls": 50,
+            "max_depth": 2,
+            "timeout_ms": 30000,
+            "headless": true
+        }
+    },
+    "http_client": {
+        "timeout_segundos": 5,
+        "rate_limit_delay": 0.01,
+        "max_reintentos": 2,
+        "user_agent": "SesamoAuditor/1.0",
+        "proxy": null
+    },
+    "plugins": {
+        "habilitar_dast": true,
+        "habilitar_sast": true,
+        "excluir": [],
+        "max_workers": 4,
+        "alert_threshold": "MEDIUM"
+    },
+    "sonarqube": {
+        "habilitar": false,
+        "url": "http://tu-sonarqube-server:9000",
+        "token": "squ_tu_token_aqui",
+        "project_key": "mi-proyecto"
+    },
+    "reportes": {
+        "formato": "all",
+        "ruta_salida": "./reportes_output/"
+    },
+    "logging": {
+        "nivel_consola": "INFO",
+        "nivel_archivo": "DEBUG",
+        "max_tamano_mb": 5,
+        "max_backups": 5
+    }
+}

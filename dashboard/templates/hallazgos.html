@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title_suffix %} — Hallazgos{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Hallazgos de Seguridad</h1>
+<p class="page-subtitle">{{ hallazgos|length }} hallazgo(s) encontrado(s)</p>
+
+<!-- Filters -->
+<div class="filters glass-card">
+    <form method="GET" action="/hallazgos" class="filter-form">
+        <div class="filter-group">
+            <label for="severidad">Severidad</label>
+            <select name="severidad" id="severidad">
+                <option value="">Todas</option>
+                {% for sev in severidades %}
+                <option value="{{ sev }}" {% if filtro_severidad == sev %}selected{% endif %}>{{ sev }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="categoria">Categoría OWASP</label>
+            <select name="categoria" id="categoria">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                <option value="{{ cat }}" {% if filtro_categoria == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="plugin">Plugin</label>
+            <select name="plugin" id="plugin">
+                <option value="">Todos</option>
+                {% for p in plugins %}
+                <option value="{{ p }}" {% if filtro_plugin == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a href="/hallazgos" class="btn btn-secondary">Limpiar</a>
+    </form>
+</div>
+
+<!-- Findings Table -->
+<div class="glass-card table-container">
+    {% if hallazgos %}
+    <table class="findings-table" id="findings-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Severidad</th>
+                <th>Plugin</th>
+                <th>URL Afectada</th>
+                <th>Parámetro</th>
+                <th>OWASP</th>
+                <th>CWE</th>
+                <th>Confianza</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="findings-tbody">
+            {% for h in hallazgos %}
+            <tr class="finding-row" data-severity="{{ h.severidad.etiqueta|lower }}">
+                <td>{{ loop.index }}</td>
+                <td><span class="badge badge-{{ h.severidad.etiqueta|lower }}">{{ h.severidad.icono }} {{ h.severidad.etiqueta }}</span></td>
+                <td>{{ h.plugin_nombre }}</td>
+                <td class="url-cell" title="{{ h.url_afectada }}">{{ h.url_afectada|truncate(40) }}</td>
+                <td><code>{{ h.parametro or '—' }}</code></td>
+                <td>{{ h.categoria_owasp.codigo }}</td>
+                <td>{{ h.cwe_id or '—' }}</td>
+                <td>{{ h.confianza.etiqueta }}</td>
+                <td><a href="/hallazgo/{{ h.global_idx }}" class="btn btn-small">Detalle</a></td>
+            </tr>
+            {% endfor %}
+         </tbody>
+    </table>
+
+    <!-- Paginación Interactiva -->
+    <div class="pagination-container">
+        <button id="btn-prev" class="btn btn-secondary btn-small">← Anterior</button>
+        <span id="page-indicator" class="page-indicator">Página 1 de 1</span>
+        <button id="btn-next" class="btn btn-secondary btn-small">Siguiente →</button>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <p>✅ No se encontraron hallazgos con los filtros actuales.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const rowsPerPage = 15;
+        const tbody = document.getElementById('findings-tbody');
+        if (!tbody) return;
+
+        const rows = Array.from(tbody.getElementsByClassName('finding-row'));
+        let currentPage = 1;
+        const totalPages = Math.ceil(rows.length / rowsPerPage) || 1;
+
+        function showPage(page) {
+            currentPage = page;
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+                if (index >= start && index < end) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            document.getElementById('page-indicator').textContent = `Página ${currentPage} de ${totalPages}`;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages;
+        }
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            if (currentPage > 1) showPage(currentPage - 1);
+        });
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            if (currentPage < totalPages) showPage(currentPage + 1);
+        });
+
+        showPage(1);
+    });
+</script>
+{% endblock %}

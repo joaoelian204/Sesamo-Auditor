@@ -1,0 +1,89 @@
+# ================================================================
+# Sésamo Auditor — Firmas de Error de Bases de Datos
+# ================================================================
+# Cada línea es una firma (substring) que indica un error de BD
+# en la respuesta HTTP. Si la respuesta contiene alguna de estas
+# firmas después de inyectar un payload, es indicativo de SQLi.
+#
+# Formato: base_de_datos:firma_de_error
+# ================================================================
+
+# ─── SQLite ───
+sqlite:SQLITE_ERROR
+sqlite:SQLite3::
+sqlite:sqlite3.OperationalError
+sqlite:unrecognized token
+sqlite:near "": syntax error
+sqlite:SQLITE_CONSTRAINT
+sqlite:SequelizeDatabaseError
+
+# ─── MySQL ───
+mysql:You have an error in your SQL syntax
+mysql:Warning: mysql_
+mysql:MySqlException
+mysql:com.mysql.jdbc
+mysql:MySQLSyntaxErrorException
+mysql:SQLSTATE[42000]
+mysql:SQL syntax.*MySQL
+mysql:Warning.*mysql_.*
+mysql:MySQL server version
+mysql:mysqli_
+mysql:MariaDB server
+
+# ─── PostgreSQL ───
+postgresql:PSQLException
+postgresql:org.postgresql
+postgresql:ERROR: syntax error at or near
+postgresql:pg_query():
+postgresql:pg_exec():
+postgresql:unterminated quoted string
+postgresql:invalid input syntax
+postgresql:PG::SyntaxError
+
+# ─── Microsoft SQL Server ───
+mssql:Unclosed quotation mark
+mssql:Microsoft OLE DB Provider
+mssql:ODBC SQL Server Driver
+mssql:Microsoft SQL Native Client
+mssql:SQL Server.*Driver
+mssql:SQLSTATE
+mssql:SQLServer JDBC Driver
+mssql:Incorrect syntax near
+mssql:Msg [0-9]+, Level
+
+# ─── Oracle ───
+oracle:ORA-[0-9]+
+oracle:Oracle error
+oracle:quoted string not properly terminated
+oracle:oracle.jdbc
+oracle:OracleException
+oracle:SQL command not properly ended
+
+# ─── MongoDB / NoSQL ───
+mongodb:MongoError
+mongodb:MongoDB ServerError
+mongodb:MongoNetworkError
+mongodb:E11000 duplicate key
+mongodb:FailedToParse
+
+# ─── ORM / Framework Errors ───
+orm:SequelizeDatabaseError
+orm:SequelizeValidationError
+orm:TypeORM
+orm:Hibernate
+orm:ActiveRecord::StatementInvalid
+orm:PrismaClientKnownRequestError
+orm:QueryFailedError
+orm:Knex: error
+
+# ─── Genéricos ───
+generic:SQL syntax
+generic:sql error
+generic:database error
+generic:db error
+generic:syntax error
+generic:unexpected token
+generic:unterminated
+generic:internal server error
+generic:stack trace
+generic:SQLSTATE

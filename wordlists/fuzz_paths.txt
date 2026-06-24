@@ -1,0 +1,155 @@
+# ================================================================
+# Sésamo Auditor — Rutas de Fuzzing de Endpoints
+# ================================================================
+# Rutas comunes para descubrimiento de endpoints ocultos,
+# archivos de configuración expuestos y paneles de administración.
+# ================================================================
+
+# ─── Paneles de Administración ───
+/admin
+/admin/
+/administrator
+/admin/login
+/admin/dashboard
+/administration
+/panel
+/cpanel
+/manage
+/management
+/backend
+
+# ─── API Endpoints Comunes ───
+/api
+/api/v1
+/api/v2
+/api/users
+/api/admin
+/api/config
+/api/status
+/api/health
+/api/debug
+/api/swagger
+/api/docs
+/api/graphql
+/rest/api
+/rest/user
+/rest/admin
+
+# ─── Documentación de API ───
+/swagger
+/swagger-ui
+/swagger.json
+/swagger.yaml
+/openapi.json
+/openapi.yaml
+/api-docs
+/redoc
+/graphql
+/graphiql
+
+# ─── Archivos de Configuración ───
+/.env
+/.env.local
+/.env.production
+/.env.development
+/.env.backup
+/config.json
+/config.yaml
+/config.yml
+/settings.json
+/application.properties
+/application.yml
+/appsettings.json
+/web.config
+/wp-config.php
+/database.yml
+
+# ─── Control de Versiones ───
+/.git
+/.git/config
+/.git/HEAD
+/.gitignore
+/.svn
+/.svn/entries
+/.hg
+/.bzr
+
+# ─── Archivos de Backup ───
+/backup
+/backup.sql
+/backup.zip
+/database.sql
+/dump.sql
+/db.sql
+/data.sql
+/.bak
+/index.html.bak
+/index.php.bak
+
+# ─── Archivos del Servidor ───
+/server-status
+/server-info
+/phpinfo.php
+/info.php
+/test.php
+/debug
+/trace
+/actuator
+/actuator/health
+/actuator/env
+/actuator/beans
+/metrics
+/monitoring
+/health
+/healthcheck
+/status
+
+# ─── Directorios Comunes ───
+/uploads
+/upload
+/files
+/static
+/assets
+/media
+/images
+/img
+/temp
+/tmp
+/cache
+/logs
+/log
+/error
+/errors
+
+# ─── Archivos de Package Manager ───
+/package.json
+/package-lock.json
+/yarn.lock
+/composer.json
+/composer.lock
+/Gemfile
+/Gemfile.lock
+/requirements.txt
+/Pipfile
+/Pipfile.lock
+/pom.xml
+/build.gradle
+
+# ─── Archivos Sensibles ───
+/robots.txt
+/sitemap.xml
+/crossdomain.xml
+/clientaccesspolicy.xml
+/security.txt
+/.well-known/security.txt
+/humans.txt
+/readme.md
+/README.md
+/CHANGELOG.md
+/LICENSE
+/Dockerfile
+/docker-compose.yml
+/docker-compose.yaml
+/.dockerignore
+/Makefile
+/Procfile

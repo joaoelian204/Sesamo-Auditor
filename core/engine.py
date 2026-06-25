@@ -329,61 +329,59 @@ class AuditEngine:
 
         # Inicializar el helper de interacción con el navegador headless si está habilitado
         from core.browser_interaction import BrowserInteractionHelper
-        browser_helper = BrowserInteractionHelper(headless=True)
-        browser_helper_iniciado = browser_helper.iniciar()
+        
+        with BrowserInteractionHelper(headless=True) as browser_helper:
+            browser_helper_iniciado = browser_helper._browser is not None
 
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futuros = {}
-            for plugin in plugins_filtrados:
-                sig = inspect.signature(plugin.ejecutar)
-                kwargs = {
-                    "target_url": target_url,
-                    "http_client": self.http_client,
-                    "metadata": metadata_filtrada,
-                }
-                if "browser_helper" in sig.parameters:
-                    kwargs["browser_helper"] = browser_helper if browser_helper_iniciado else None
-                
-                futuros[executor.submit(plugin.ejecutar, **kwargs)] = plugin
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futuros = {}
+                for plugin in plugins_filtrados:
+                    sig = inspect.signature(plugin.ejecutar)
+                    kwargs = {
+                        "target_url": target_url,
+                        "http_client": self.http_client,
+                        "metadata": metadata_filtrada,
+                    }
+                    if "browser_helper" in sig.parameters:
+                        kwargs["browser_helper"] = browser_helper if browser_helper_iniciado else None
+                    
+                    futuros[executor.submit(plugin.ejecutar, **kwargs)] = plugin
 
-            for futuro in as_completed(futuros):
-                plugin = futuros[futuro]
-                try:
-                    hallazgos = futuro.result() or []
+                for futuro in as_completed(futuros):
+                    plugin = futuros[futuro]
+                    try:
+                        hallazgos = futuro.result() or []
 
-                    # Filtrar hallazgos basados en el AlertThreshold del plugin
-                    if plugin.alert_threshold == "HIGH":
-                        from core.modelos import Confianza
-                        hallazgos_filtrados_umbral = [h for h in hallazgos if h.confianza != Confianza.TENTATIVA]
-                        if len(hallazgos_filtrados_umbral) < len(hallazgos):
-                            logger.info(
-                                f"  🛡️ Umbral HIGH: descartados {len(hallazgos) - len(hallazgos_filtrados_umbral)} "
-                                f"hallazgos de confianza TENTATIVA en {plugin.nombre}."
+                        # Filtrar hallazgos basados en el AlertThreshold del plugin
+                        if plugin.alert_threshold == "HIGH":
+                            from core.modelos import Confianza
+                            hallazgos_filtrados_umbral = [h for h in hallazgos if h.confianza != Confianza.TENTATIVA]
+                            if len(hallazgos_filtrados_umbral) < len(hallazgos):
+                                logger.info(
+                                    f"  🛡️ Umbral HIGH: descartados {len(hallazgos) - len(hallazgos_filtrados_umbral)} "
+                                    f"hallazgos de confianza TENTATIVA en {plugin.nombre}."
+                                )
+                                hallazgos = hallazgos_filtrados_umbral
+
+                        # Aplicar max_alerts_per_rule (límite de alertas por regla / plugin)
+                        if plugin.max_alerts_per_rule > 0 and len(hallazgos) > plugin.max_alerts_per_rule:
+                            logger.warning(
+                                f"  ⚠️ {plugin.nombre} superó max_alerts_per_rule ({plugin.max_alerts_per_rule}). "
+                                f"Recortando de {len(hallazgos)} a {plugin.max_alerts_per_rule} hallazgos."
                             )
-                            hallazgos = hallazgos_filtrados_umbral
+                            hallazgos = hallazgos[:plugin.max_alerts_per_rule]
 
-                    # Aplicar max_alerts_per_rule (límite de alertas por regla / plugin)
-                    if plugin.max_alerts_per_rule > 0 and len(hallazgos) > plugin.max_alerts_per_rule:
-                        logger.warning(
-                            f"  ⚠️ {plugin.nombre} superó max_alerts_per_rule ({plugin.max_alerts_per_rule}). "
-                            f"Recortando de {len(hallazgos)} a {plugin.max_alerts_per_rule} hallazgos."
+                        if hallazgos:
+                            logger.info(f"  ✓ {plugin.nombre}: {len(hallazgos)} hallazgo(s)")
+                        else:
+                            logger.info(f"  ✓ {plugin.nombre}: Sin hallazgos")
+                        self.resultado.hallazgos.extend(hallazgos)
+                        self.resultado.plugins_ejecutados.append(plugin.nombre)
+                    except Exception as e:
+                        logger.error(f"  ✗ Error en plugin {plugin.nombre}: {e}")
+                        self.resultado.plugins_ejecutados.append(
+                            f"{plugin.nombre} (error)"
                         )
-                        hallazgos = hallazgos[:plugin.max_alerts_per_rule]
-
-                    if hallazgos:
-                        logger.info(f"  ✓ {plugin.nombre}: {len(hallazgos)} hallazgo(s)")
-                    else:
-                        logger.info(f"  ✓ {plugin.nombre}: Sin hallazgos")
-                    self.resultado.hallazgos.extend(hallazgos)
-                    self.resultado.plugins_ejecutados.append(plugin.nombre)
-                except Exception as e:
-                    logger.error(f"  ✗ Error en plugin {plugin.nombre}: {e}")
-                    self.resultado.plugins_ejecutados.append(
-                        f"{plugin.nombre} (error)"
-                    )
-
-        if browser_helper_iniciado:
-            browser_helper.cerrar()
 
 
         # ─── FASE 3: Validación de Segundo Paso ───

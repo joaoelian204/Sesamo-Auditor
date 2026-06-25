@@ -158,3 +158,12 @@ class BrowserInteractionHelper:
             pass
         self._browser = None
         self._playwright = None
+
+    def __enter__(self):
+        self.iniciar()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cerrar()
+        return False
+

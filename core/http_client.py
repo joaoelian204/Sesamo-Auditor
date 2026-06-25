@@ -24,6 +24,7 @@ Uso:
     response = client.post("https://target.com/login", data={"user": "admin"})
 """
 
+import threading
 import time
 from typing import Any, Optional
 
@@ -77,6 +78,7 @@ class HttpClient:
                 - user_agent (str): User-Agent header (default: "SesamoAuditor/1.0")
                 - proxy (str|None): URL del proxy (ej: "http://127.0.0.1:8080")
         """
+        self._lock = threading.Lock()
         self._config = {**_CONFIG_DEFECTO, **(config or {})}
         self.timeout: int = self._config["timeout_segundos"]
         self.rate_limit_delay: float = self._config["rate_limit_delay"]
@@ -206,15 +208,17 @@ class HttpClient:
                 return None
 
         # ── Circuit breaker: si el target está caído, abortar rápido ──
-        if self._circuit_abierto:
-            logger.debug(f"⛔ Circuit breaker abierto — omitiendo {url}")
-            return None
+        with self._lock:
+            if self._circuit_abierto:
+                logger.debug(f"⛔ Circuit breaker abierto — omitiendo {url}")
+                return None
 
         # ── Anti-CSRF token automatic regeneration hook ──
         if method in ("POST", "PUT", "DELETE"):
             self._regenerar_csrf_token(url, params, data, json, headers)
 
-        self._aplicar_rate_limit()
+        with self._lock:
+            self._aplicar_rate_limit()
 
         request_timeout = timeout or self.timeout
 
@@ -244,20 +248,22 @@ class HttpClient:
             )
 
             # Conexión exitosa: resetear contador de errores
-            self._errores_consecutivos = 0
+            with self._lock:
+                self._errores_consecutivos = 0
             return response
 
         except requests.exceptions.ConnectionError as e:
-            self._errores_consecutivos += 1
-            if self._errores_consecutivos >= self._circuit_breaker_limite:
-                self._circuit_abierto = True
-                logger.error(
-                    f"🔴 Circuit breaker activado tras {self._errores_consecutivos} "
-                    f"errores consecutivos. Target parece estar caído. "
-                    f"Abortando peticiones restantes."
-                )
-            else:
-                logger.error(f"Error de conexión a {url}: {e}")
+            with self._lock:
+                self._errores_consecutivos += 1
+                if self._errores_consecutivos >= self._circuit_breaker_limite:
+                    self._circuit_abierto = True
+                    logger.error(
+                        f"🔴 Circuit breaker activado tras {self._errores_consecutivos} "
+                        f"errores consecutivos. Target parece estar caído. "
+                        f"Abortando peticiones restantes."
+                    )
+                else:
+                    logger.error(f"Error de conexión a {url}: {e}")
             return None
 
         except requests.exceptions.Timeout:
@@ -298,13 +304,15 @@ class HttpClient:
 
     def limpiar_cookies(self) -> None:
         """Limpia todas las cookies de la sesión."""
-        self.session.cookies.clear()
-        logger.debug("Cookies de sesión limpiadas")
+        with self._lock:
+            self.session.cookies.clear()
+            logger.debug("Cookies de sesión limpiadas")
 
     def cerrar(self) -> None:
         """Cierra la sesión HTTP y libera recursos."""
-        self.session.close()
-        logger.debug("Sesión HTTP cerrada")
+        with self._lock:
+            self.session.close()
+            logger.debug("Sesión HTTP cerrada")
 
     @staticmethod
     def requiere_auth(response) -> bool:
@@ -330,69 +338,70 @@ class HttpClient:
         Busca un token CSRF en los parámetros o cabeceras y, de encontrarlo, realiza
         una petición GET al target para obtener un token nuevo y lo reemplaza.
         """
-        patrones_csrf = ["csrf", "xsrf", "token", "anticsrf"]
-        csrf_clave = None
-        donde = None
+        with self._lock:
+            patrones_csrf = ["csrf", "xsrf", "token", "anticsrf"]
+            csrf_clave = None
+            donde = None
 
-        # 1. Buscar en headers
-        if headers:
-            for k in headers:
-                if any(p in k.lower() for p in patrones_csrf):
-                    csrf_clave = k
-                    donde = "header"
-                    break
+            # 1. Buscar en headers
+            if headers:
+                for k in headers:
+                    if any(p in k.lower() for p in patrones_csrf):
+                        csrf_clave = k
+                        donde = "header"
+                        break
 
-        # 2. Buscar en params
-        if not csrf_clave and params:
-            for k in params:
-                if any(p in k.lower() for p in patrones_csrf):
-                    csrf_clave = k
-                    donde = "param"
-                    break
+            # 2. Buscar en params
+            if not csrf_clave and params:
+                for k in params:
+                    if any(p in k.lower() for p in patrones_csrf):
+                        csrf_clave = k
+                        donde = "param"
+                        break
 
-        # 3. Buscar en form data
-        if not csrf_clave and isinstance(data, dict):
-            for k in data:
-                if any(p in k.lower() for p in patrones_csrf):
-                    csrf_clave = k
-                    donde = "data"
-                    break
+            # 3. Buscar en form data
+            if not csrf_clave and isinstance(data, dict):
+                for k in data:
+                    if any(p in k.lower() for p in patrones_csrf):
+                        csrf_clave = k
+                        donde = "data"
+                        break
 
-        if not csrf_clave:
-            return
+            if not csrf_clave:
+                return
 
-        # Regeneración: Hacer GET a la página principal para refrescar cookies/tokens
-        try:
-            logger.debug(f"Refrescando token anti-CSRF para clave: {csrf_clave} ({donde})")
-            # Desactivar temporalmente la regeneración en este GET para evitar loops infinitos
-            original_headers = self.session.headers.copy()
-            resp = self.session.get(self.target_url or url, timeout=self.timeout)
-            if resp:
-                import re
-                # Buscar token en html (patrón simple: input hidden con name/value)
-                match = re.search(r'name=["\']' + re.escape(csrf_clave) + r'["\']\s+value=["\']([^"\']+)["\']', resp.text, re.IGNORECASE)
-                if not match:
-                    # Alternativo: value antes que name
-                    match = re.search(r'value=["\']([^"\']+)["\']\s+name=["\']' + re.escape(csrf_clave) + r'["\']', resp.text, re.IGNORECASE)
-                
-                nuevo_val = None
-                if match:
-                    nuevo_val = match.group(1)
-                else:
-                    # Buscar en cookies
-                    for cookie in self.session.cookies:
-                        if any(p in cookie.name.lower() for p in patrones_csrf):
-                            nuevo_val = cookie.value
-                            break
+            # Regeneración: Hacer GET a la página principal para refrescar cookies/tokens
+            try:
+                logger.debug(f"Refrescando token anti-CSRF para clave: {csrf_clave} ({donde})")
+                # Desactivar temporalmente la regeneración en este GET para evitar loops infinitos
+                original_headers = self.session.headers.copy()
+                resp = self.session.get(self.target_url or url, timeout=self.timeout)
+                if resp:
+                    import re
+                    # Buscar token en html (patrón simple: input hidden con name/value)
+                    match = re.search(r'name=["\']' + re.escape(csrf_clave) + r'["\']\s+value=["\']([^"\']+)["\']', resp.text, re.IGNORECASE)
+                    if not match:
+                        # Alternativo: value antes que name
+                        match = re.search(r'value=["\']([^"\']+)["\']\s+name=["\']' + re.escape(csrf_clave) + r'["\']', resp.text, re.IGNORECASE)
+                    
+                    nuevo_val = None
+                    if match:
+                        nuevo_val = match.group(1)
+                    else:
+                        # Buscar en cookies
+                        for cookie in self.session.cookies:
+                            if any(p in cookie.name.lower() for p in patrones_csrf):
+                                nuevo_val = cookie.value
+                                break
 
-                if nuevo_val:
-                    logger.debug(f"Nuevo token CSRF obtenido: {nuevo_val[:15]}...")
-                    if donde == "header" and headers:
-                        headers[csrf_clave] = nuevo_val
-                    elif donde == "param" and params:
-                        params[csrf_clave] = nuevo_val
-                    elif donde == "data" and isinstance(data, dict):
-                        data[csrf_clave] = nuevo_val
-        except Exception as e:
-            logger.warning(f"Error regenerando token anti-CSRF: {e}")
+                    if nuevo_val:
+                        logger.debug(f"Nuevo token CSRF obtenido: {nuevo_val[:15]}...")
+                        if donde == "header" and headers:
+                            headers[csrf_clave] = nuevo_val
+                        elif donde == "param" and params:
+                            params[csrf_clave] = nuevo_val
+                        elif donde == "data" and isinstance(data, dict):
+                            data[csrf_clave] = nuevo_val
+            except Exception as e:
+                logger.warning(f"Error regenerando token anti-CSRF: {e}")
 
